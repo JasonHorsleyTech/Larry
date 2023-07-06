@@ -1,6 +1,6 @@
 <?php
 
-namespace JasonHorsleyTech\Larry;
+namespace Larry\Larry;
 
 use App\Models\User;
 

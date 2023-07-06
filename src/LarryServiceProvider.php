@@ -1,10 +1,10 @@
 <?php
 
-namespace JasonHorsleyTech\Larry;
+namespace Larry\Larry;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use JasonHorsleyTech\Larry\Console\SetupCommand;
+use Larry\Larry\Console\SetupCommand;
 
 class LarryServiceProvider extends ServiceProvider
 {

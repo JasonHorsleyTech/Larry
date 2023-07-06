@@ -1,6 +1,6 @@
 <?php
 
-namespace JasonHorsleyTech\Larry\Console;
+namespace Larry\Larry\Console;
 
 use Illuminate\Console\Command;
 

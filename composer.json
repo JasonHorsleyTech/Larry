@@ -1,9 +1,9 @@
 {
-  "name": "jason_horsley_tech/larry",
-  "description": "Larry, the siri style GPT assistant for laravel stacks.",
+  "name": "larry/larry",
+  "description": "The siri style GPT assistant for laravel stacks.",
   "autoload": {
     "psr-4": {
-      "JasonHorsleyTech\\Larry\\": "src/"
+      "Larry\\Larry\\": "src/"
     }
   },
   "authors": [
@@ -16,7 +16,7 @@
   "extra": {
     "laravel": {
       "providers": [
-        "JasonHorsleyTech\\Larry\\LarryServiceProvider"
+        "Larry\\Larry\\LarryServiceProvider"
       ]
     }
   }
