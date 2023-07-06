@@ -12,12 +12,21 @@
       "email": "Jason@JasonHorsley.tech"
     }
   ],
-  "require": {},
+  "require": {
+    "openai-php/client": "^0.6.2",
+    "symfony/http-client": "^6.3",
+    "nyholm/psr7": "^1.8"
+  },
   "extra": {
     "laravel": {
       "providers": [
         "Larry\\Larry\\LarryServiceProvider"
       ]
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
     }
   }
 }
