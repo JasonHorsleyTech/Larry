@@ -8,7 +8,7 @@ Here's a hopeful list of features that Larry is intended to implement:
 
 ### Converse
 
-Talk directly into your phone's mic, and Larry transcribes your words into text. This can be achieved either by free browser tools or external resources. With Larry, you can engage in open-ended conversations that are contextually sensitive and stylistically unique.
+Speech to chat-gpt, responding as it usually does. Maybe with some additional custom 'styling' or 'context'. Use voice to text (keyboard, free browser APIs, external, whatever).
 
 ### Formfill
 
