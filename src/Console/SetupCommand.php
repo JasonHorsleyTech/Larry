@@ -1,6 +1,6 @@
 <?php
 
-namespace JasonHorsleyTech\GptAssistant\Console;
+namespace JasonHorsleyTech\Larry\Console;
 
 use Illuminate\Console\Command;
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace JasonHorsleyTech\GptAssistant;
+namespace JasonHorsleyTech\Larry;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use JasonHorsleyTech\GptAssistant\Console\SetupCommand;
+use JasonHorsleyTech\Larry\Console\SetupCommand;
 
-class GptAssistantServiceProvider extends ServiceProvider
+class LarryServiceProvider extends ServiceProvider
 {
     public function boot()
     {

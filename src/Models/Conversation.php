@@ -1,6 +1,6 @@
 <?php
 
-namespace JasonHorsleyTech\GptAssistant\Models;
+namespace JasonHorsleyTech\Larry\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
