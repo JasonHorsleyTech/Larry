@@ -1,16 +1,23 @@
 {
-    "name": "jason_horsley_tech/gpt_assistant",
-    "description": "GPT assistant for laravel",
-    "autoload": {
-        "psr-4": {
-            "JasonHorsleyTech\\GptAssistant\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Jason Horsley",
-            "email": "32709073+JasonHorsleyTech@users.noreply.github.com"
-        }
-    ],
-    "require": {}
+  "name": "jason_horsley_tech/larry",
+  "description": "Larry, the siri style GPT assistant for laravel stacks.",
+  "autoload": {
+    "psr-4": {
+      "JasonHorsleyTech\\Larry\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Jason Horsley",
+      "email": "Jason@JasonHorsley.tech"
+    }
+  ],
+  "require": {},
+  "extra": {
+    "laravel": {
+      "providers": [
+        "JasonHorsleyTech\\Larry\\LarryServiceProvider"
+      ]
+    }
+  }
 }
