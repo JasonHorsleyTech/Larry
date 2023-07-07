@@ -2,36 +2,40 @@
 
 namespace Larry\Larry\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Larry\Larry\Components\ChatComponent;
+use App\Http\Controllers\Controller;
+use Larry\Larry\Jobs\GptChatCompletion;
+use Larry\Larry\Models\Exchange;
+use Larry\Larry\Requests\UserTranscriptsRequest;
 use Larry\Larry\Services\GptService;
 
 abstract class ChatController extends Controller
 {
     abstract public function getPrompt(): ChatComponent;
 
-    final function __invoke(GptService $gptService)
+    final public function __invoke(UserTranscriptsRequest $request, GptService $gptService)
     {
-        // TODO: Move to validator
-        $data = request()->validate([
-            'user_transcripts' => 'array',
-            'user_transcripts.*.said' => 'string',
-            'user_transcripts.*.confidence' => 'numeric',
+        $userId = auth()->user()->id;
+        $data = $request->validated();
+
+        $prompt = $this->getPrompt();
+        $exchange = Exchange::create([
+            'user_id' => $userId,
         ]);
 
-        // TODO: Create exchange
+        $exchange->userTranscripts()->createMany($data['transcripts']);
 
-        // TODO: Dispatch a job, return the exchange id.
+        // TODO: Rethink
+        for ($i = 0; $i < count($data['transcripts']); $i++) {
+            $prompt->addUserMessage($data['transcripts'][$i]['said']);
+        }
 
-        // TODO: larry default api route to long poll exchanges for updates.
+        GptChatCompletion::dispatchAfterResponse($userId, $prompt, $exchange);
 
+        return response()->json([
+            'type' => 'post',
+            'exchange_id' => $exchange->id,
+        ]);
     }
-    /*
-        // TODO: Job
-        $gptResponse = $gptService->chatCompletion($this->getPrompt());
-
-        // TODO: If response is function call and function is reprompt, loop
-
-        return $gptResponse;
-        */
 }

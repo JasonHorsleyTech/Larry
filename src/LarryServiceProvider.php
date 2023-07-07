@@ -34,8 +34,8 @@ class LarryServiceProvider extends ServiceProvider
     private function registerRoutes()
     {
         Route::group([
-            'as' => 'larry.api.',
-            'prefix' => 'larry',
+            'as' => 'api.larry.',
+            'prefix' => 'api/larry',
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });
