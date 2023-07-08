@@ -4,8 +4,8 @@ namespace Larry\Larry\Services;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
-use Larry\Larry\Components\ChatComponent;
 use Larry\Larry\Models\PromptResponse;
+use Larry\Larry\Prompts\ChatPrompt;
 use OpenAI;
 use OpenAI\Client;
 use OpenAI\Exceptions\ErrorException;
@@ -29,7 +29,7 @@ class GptService
         $this->client = OpenAI::client(env('GPT_OPENAI_API_KEY'));
     }
 
-    public function chatCompletion(ChatComponent $chatPrompt, HasMany | null $createFromRelationship = null)
+    public function chatCompletion(ChatPrompt $chatPrompt, HasMany | null $createFromRelationship = null)
     {
         $payload = [
             'model' => $chatPrompt->model,

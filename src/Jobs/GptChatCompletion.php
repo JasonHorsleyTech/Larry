@@ -12,7 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use Larry\Larry\Components\ChatComponent;
+use Larry\Larry\Prompts\ChatPrompt;
 use Larry\Larry\Models\Exchange;
 use Larry\Larry\Models\ExchangePromptResponse;
 use Larry\Larry\Services\GptService;
@@ -22,7 +22,7 @@ class GptChatCompletion implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private string $userUUID;
-    public ChatComponent $chatPrompt;
+    public ChatPrompt $chatPrompt;
     public Exchange $exchange;
 
     /**
@@ -30,7 +30,7 @@ class GptChatCompletion implements ShouldQueue
      */
     public function __construct(
         string $userUUID,
-        ChatComponent $chatPrompt,
+        ChatPrompt $chatPrompt,
         Exchange $exchange,
     ) {
         $this->userUUID = $userUUID;

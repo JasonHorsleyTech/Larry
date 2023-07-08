@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
-use Larry\Larry\Components\ChatComponent;
+use Larry\Larry\Prompts\ChatPrompt;
 
 class PromptResponse extends Model
 {
@@ -199,7 +199,7 @@ class PromptResponse extends Model
     /*------------------------------------*\
                          HELPERS
      \*------------------------------------*/
-    public function requiresBackendFunctionExecution(ChatComponent $component): bool
+    public function requiresBackendFunctionExecution(ChatPrompt $component): bool
     {
         // GPT didn't ask us to call any exposed functions.
         if (!$this->function_name) return false;
@@ -216,8 +216,8 @@ class PromptResponse extends Model
     }
 
     public function runFunctionAndUpdateChat(
-        ChatComponent $component
-    ): ChatComponent {
+        ChatPrompt $component
+    ): ChatPrompt {
         $requestedCall = $component->findFunction($this->function_name);
 
         $runner = new $requestedCall(...$this->function_args);
@@ -235,7 +235,7 @@ class PromptResponse extends Model
         return $component;
     }
 
-    public function requiresBackendReprompt(ChatComponent $component): bool
+    public function requiresBackendReprompt(ChatPrompt $component): bool
     {
         $requestedCall = $component->findFunction($this->function_name);
 
