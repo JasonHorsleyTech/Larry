@@ -34,6 +34,8 @@ class LarryServiceProvider extends ServiceProvider
     private function registerRoutes()
     {
         Route::group([
+            // TODO: Doesn't work?
+            // 'middleware' => ['auth:sanctum'],
             'as' => 'api.larry.',
             'prefix' => 'api/larry',
         ], function () {

@@ -35,6 +35,7 @@ class GptService
             'model' => $chatPrompt->model,
             'messages' => $chatPrompt->messages,
         ];
+        // todo add userid to payload
 
         if ($chatPrompt->hasFunctions()) {
             // Hard to debug this :}

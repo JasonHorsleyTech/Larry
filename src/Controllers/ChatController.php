@@ -8,15 +8,16 @@ use App\Http\Controllers\Controller;
 use Larry\Larry\Jobs\GptChatCompletion;
 use Larry\Larry\Models\Exchange;
 use Larry\Larry\Requests\UserTranscriptsRequest;
-use Larry\Larry\Services\GptService;
 
 abstract class ChatController extends Controller
 {
     abstract public function getPrompt(): ChatPrompt;
 
-    final public function __invoke(UserTranscriptsRequest $request, GptService $gptService)
+    final public function __invoke(UserTranscriptsRequest $request)
     {
-        $userId = auth()->user()->id;
+        // $userId = auth()->user()->id;
+        // TODO: god.
+        $userId = 1;
         $data = $request->validated();
 
         $prompt = $this->getPrompt();

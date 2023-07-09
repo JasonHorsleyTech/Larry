@@ -30,10 +30,12 @@ abstract class ChatPrompt
      */
     private function addMessage(mixed $newMessage): self
     {
-        $index = collect($this->messages)->firstWhere(fn ($message, $key) => $message['role'] === $newMessage['role'] && isset($message['placeholder']), false);
+        $index = collect($this->messages)->search(function ($message) use ($newMessage) {
+            return $message['role'] === $newMessage['role'] && isset($message['placeholder']);
+        });
 
         if ($index !== false) {
-            array_splice($this->messages, $index, 1, [$newMessage]);
+            $this->messages[$index] = $newMessage;
         } else {
             $this->messages[] = $newMessage;
         }

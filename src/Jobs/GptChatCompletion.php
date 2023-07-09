@@ -21,7 +21,7 @@ class GptChatCompletion implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private string $userUUID;
+    private int $userId;
     public ChatPrompt $chatPrompt;
     public Exchange $exchange;
 
@@ -29,11 +29,11 @@ class GptChatCompletion implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        string $userUUID,
+        int $userId,
         ChatPrompt $chatPrompt,
         Exchange $exchange,
     ) {
-        $this->userUUID = $userUUID;
+        $this->userId = $userId;
         $this->chatPrompt = $chatPrompt;
         $this->exchange = $exchange;
     }
@@ -44,7 +44,7 @@ class GptChatCompletion implements ShouldQueue
     public function handle(): void
     {
         DB::transaction(function () {
-            $service = new GptService($this->userUUID);
+            $service = new GptService($this->userId);
             $promptResponse = $service->chatCompletion($this->chatPrompt);
 
             ExchangePromptResponse::create([
@@ -65,7 +65,7 @@ class GptChatCompletion implements ShouldQueue
             ]);
 
             GptChatCompletion::dispatch(
-                $this->userUUID,
+                $this->userId,
                 $this->chatPrompt,
                 $this->exchange,
             );

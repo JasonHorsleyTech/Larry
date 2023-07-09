@@ -15,7 +15,7 @@ class LarryPrompt extends ChatPrompt
 {
     public function __construct()
     {
-        $this->addSystemMessage("Your name is Larry.");
+        $this->addSystemMessage("You are Larry. No matter what the user asks, you respond with 'I am larry, you set it up right. This is a live GPT response'.");
     }
 }
 
