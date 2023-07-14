@@ -5,7 +5,7 @@ namespace Larry\Larry\Services;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Larry\Larry\Models\PromptResponse;
-use Larry\Larry\Prompts\ChatPrompt;
+use Larry\Larry\Prompts\BaseChatPrompt;
 use OpenAI;
 use OpenAI\Client;
 use OpenAI\Exceptions\ErrorException;
@@ -20,7 +20,12 @@ class GptService
 
     public function __construct(int | null $userId = null)
     {
-        $this->userId = $userId === null ? Auth::user()->id : $userId;
+        if (Auth::check() === false && $userId === null) {
+            // TODO: Warning
+            // Warning: Running prompts without a userID can potentially flag your entire OpenAI entire account
+        } else {
+            $this->userId = $userId ?? Auth::user()->id;
+        }
 
         if (env('GPT_ENABLED', false) === false) {
             throw new \Exception('GPT is not enabled');
@@ -29,27 +34,28 @@ class GptService
         $this->client = OpenAI::client(env('GPT_OPENAI_API_KEY'));
     }
 
-    public function chatCompletion(ChatPrompt $chatPrompt, HasMany | null $createFromRelationship = null)
+    public function chatCompletion(BaseChatPrompt $baseChatPrompt, HasMany | null $createFromRelationship = null)
     {
         $payload = [
-            'model' => $chatPrompt->model,
-            'messages' => $chatPrompt->messages,
+            'model' => $baseChatPrompt->model,
+            'messages' => $baseChatPrompt->messages,
         ];
         // todo add userid to payload
 
-        if ($chatPrompt->hasFunctions()) {
+
+        if ($baseChatPrompt->hasFunctions()) {
             // Hard to debug this :}
             if (in_array($payload['model'], self::$chatModelsThatCanCallFunctions) === false) {
                 throw new \Exception('This model does not support calling functions');
             }
 
-            $payload['functions'] = $chatPrompt->describeFunctionsToGpt();
-            $payload['functionCall'] = $chatPrompt->forceGptFunctionalResponse();
+            $payload['functions'] = $baseChatPrompt->describeFunctions();
+            $payload['function_call'] = $baseChatPrompt->getFunctionCall();
         }
 
         $promptResponsePayload = [
-            'component' => $chatPrompt::class,
-            'type' => $chatPrompt->type,
+            'component' => $baseChatPrompt::class,
+            'type' => $baseChatPrompt->type,
             'payload' => $payload,
         ];
 

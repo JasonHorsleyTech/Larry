@@ -6,10 +6,8 @@ use Exception;
 use Larry\Larry\ExposedFunctions\AbstractExposedFunction;
 use Illuminate\Contracts\View\View as ViewInput;
 use Illuminate\Contracts\View\Factory as ViewFactory;
-use Illuminate\Support\Collection;
-use Larry\Larry\Models\UserTranscript;
 
-abstract class ChatPrompt
+abstract class BaseChatPrompt
 {
     public float $temperature = 0;
     public int $maxTokens = 1024;
@@ -22,24 +20,39 @@ abstract class ChatPrompt
 
     public $messages = [];
 
+    // @var array[AbstractExposedFunction]
+    public $functions = [];
+
+    public $functionCall = null;
+
     /**
-     * Add message. If messages has a placeholder for matching role, put it there, otherwise push.
+     * Add message.
+     *
+     * IDEA: Placeholder messages. Might produce better results if, say, the laravel validation rules are always the *last* message in the batch...
+     * -- setup --
+     *      $p->addSystemMessage('You generate payload to pass given laravel validation rules');
+     *      $p->addPlaceholderMessage('User');
+     *      $p->addFunctionResponseMessage("{first_name: ['required', 'string'], last_name: ['required', 'string']}");
+     *
+     * -- Job adds transcript, but before the rules --
+     *      $p->addUserMessage("Hi, I'm Jason Horsley")
+     *
+     * TODO: See if this produces better results? Or if there's another use-case for it.
+     *
+     * IDEA: Instead of "placeholder", we could
+     *  -- $p->addMessage('system', 'system message here');
+     *  -- $p->addClosingMessage('function', {first_name: ['required']});
+     *  -- $p->addMessage('user', 'Hi, Im Jason Horsley');
+     *  -- $p->getMessages() returns array_merge($addMessages, $endMessages).
+     *
+     * Issue: Not as readable as placeholder, but a hell of a lot easier to code... If a conversation already has two exchanges, should both go in the "placeholder" section?
      *
      * Directly to OpenAI transporter based on this format
      * https://platform.openai.com/docs/api-reference/chat/create#chat/create-messages
      */
     private function addMessage(mixed $newMessage): self
     {
-        $index = collect($this->messages)->search(function ($message) use ($newMessage) {
-            return $message['role'] === $newMessage['role'] && isset($message['placeholder']);
-        });
-
-        if ($index !== false) {
-            $this->messages[$index] = $newMessage;
-        } else {
-            $this->messages[] = $newMessage;
-        }
-
+        $this->messages[] = $newMessage;
         return $this;
     }
 
@@ -79,15 +92,8 @@ abstract class ChatPrompt
             'content' => $this->parseMessageInput($input),
         ]);
     }
-    public function addUserTranscript(UserTranscript $transcript): self
-    {
-        return $this->addMessage([
-            'role' => 'user',
-            'content' => $transcript->said,
-        ]);
-    }
 
-    public function addAssistantResponseMessage(mixed $input): self
+    public function addAssistantMessage(mixed $input): self
     {
         return $this->addMessage([
             'role' => 'assistant',
@@ -119,43 +125,56 @@ abstract class ChatPrompt
         ]);
     }
 
-
     /**
-     * Push placeholder to messages[]. Next addMessage for matching role will go here.
+     * Expose function
      *
-     * @param  string  $from user | assistant | function
+     * @param string $functionClass - must extend AbstractExposedFunction
      */
-    public function addPlaceholderMessage(string $from): self
+    public function exposeFunction(string $functionClass)
     {
-        return $this->addMessage([
-            'role' => $from,
-            'placeholder' => true,
-        ]);
+        $this->functions[] = $functionClass;
     }
 
-
-    // TODO: Rethink "hasFunctions" trait shit. Should just all be here. if has functions, then has functions.
+    /**
+     * Expose function and force GPT to use it.
+     *
+     * @param string $functionClass - must extend AbstractExposedFunction
+     */
+    public function exposeForcedFunction(string $functionClass)
+    {
+        $this->functionCall = $functionClass;
+        $this->exposeFunction($functionClass);
+    }
 
     public function hasFunctions(): bool
     {
-        return in_array(FunctionalPromptTrait::class, class_uses($this), true);
+        return count($this->functions) > 0;
     }
 
-    // Overwritten in FunctionalPromptTrait
-    public function findFunction(): AbstractExposedFunction | false
+    public function getFunctionCall(): string
     {
-        return false;
+        if (!$this->hasFunctions()) {
+            return "none";
+        }
+
+        if ($this->functionCall) {
+            return json_encode(['name' => $this->functionCall]);
+        }
+
+        return "auto";
     }
 
-    // Overwritten in FunctionalPromptTrait
-    public function describeFunctionsToGpt(): array
+    public function describeFunctions(): array
     {
-        return [];
+        return collect($this->functions)->map(function ($function) {
+            return $function::describe();
+        })->toArray();
     }
 
-    // Overwritten in FunctionalPromptTrait
-    public function forceGptFunctionalResponse(): string
+    public function findFunction(string $functionName): string
     {
-        return 'none';
+        return collect($this->functions)->first(function ($function) use ($functionName) {
+            return $function::describe()['name'] === $functionName;
+        });
     }
 }

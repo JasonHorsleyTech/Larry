@@ -11,20 +11,39 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('gpt_exchanges', function (Blueprint $table) {
+        Schema::create('gpt_conversations', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')
+            $table->foreignId('user_id')->nullable()
                 ->constrained()
                 ->on('users')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
+            $table->string('prompt');
 
+            $table->string('summary')->nullable();
+            $table->boolean('finished')->default(false);
+
+            $table->timestamps();
+        });
+
+        // An "exchange" is an exchange between a real human "user" and the gpt chatbot.
+        Schema::create('gpt_exchanges', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('conversation_id')->nullable()
+                ->constrained()
+                ->on('gpt_conversations')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
+
+            // NOT WORKING??
             $table->integer('prompts_required')->default(1);
 
             $table->timestamps();
         });
 
+        // This is what the user said. Users cannot "say" things outside the context of a GPT exchange.
         Schema::create('gpt_user_transcripts', function (Blueprint $table) {
             $table->id();
 
@@ -37,6 +56,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // We ran a prompt (through GptService), here's the result.
         Schema::create('gpt_prompt_responses', function (Blueprint $table) {
             $table->id();
 
@@ -51,14 +71,31 @@ return new class extends Migration
             // Exactly what we got back
             $table->text('error_message')->nullable();
 
+            $table->foreignId('exchange_id')->nullable()
+                ->constrained()
+                ->on('gpt_exchanges')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
+
             $table->timestamps();
             $table->timestamp('received_at')->nullable();
         });
 
-        Schema::create('gpt_exchange_prompt_responses', function (Blueprint $table) {
+        // GPT asked we call a function. Here's the function and args, here's the result.
+        Schema::create('gpt_function_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('exchange_id')->constrained('gpt_exchanges')->onDelete('cascade');
-            $table->foreignId('prompt_response_id')->constrained('gpt_prompt_responses')->onDelete('cascade');
+
+            $table->string('name'); // function
+            $table->string('function'); // path/to/function
+            $table->json('arguments')->nullable();
+            $table->json('result')->nullable();
+
+            $table->foreignId('exchange_id')->nullable()
+                ->constrained()
+                ->on('gpt_exchanges')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
+
             $table->timestamps();
         });
     }
@@ -68,7 +105,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('gpt_conversations');
         Schema::dropIfExists('gpt_exchanges');
+        Schema::dropIfExists('gpt_user_transcripts');
         Schema::dropIfExists('gpt_prompt_responses');
+        Schema::dropIfExists('gpt_function_requests');
     }
 };

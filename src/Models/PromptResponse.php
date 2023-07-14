@@ -3,10 +3,8 @@
 namespace Larry\Larry\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
-use Larry\Larry\Prompts\ChatPrompt;
 
 class PromptResponse extends Model
 {
@@ -23,9 +21,9 @@ class PromptResponse extends Model
     /*------------------------------------*\
                      RELATIONSHIPS
      \*------------------------------------*/
-    public function exchange(): HasOneThrough
+    public function exchange(): BelongsTo
     {
-        return $this->hasOneThrough(Exchange::class, ExchangePromptResponse::class, 'prompt_response_id', 'id', 'id', 'exchange_id');
+        return $this->belongsTo(Exchange::class, 'exchange_id');
     }
 
     /*------------------------------------*\
@@ -68,32 +66,14 @@ class PromptResponse extends Model
         return false;
     }
 
-    public function getMessageAttribute(): Collection | false
+    public function getMessageAttribute(): array | false
     {
-        $response = $this->response;
-        if (isset($response['choices'][0]['message'])) {
-            return collect($response['choices'][0]['message']);
-        }
-
-        return false;
+        return $this->response['choices'][0]['message'] ?? false;
     }
 
     public function getContentAttribute(): string | false
     {
         return $this->message['content'] ?? false;
-    }
-
-    public function getFunctionNameAttribute(): string | false
-    {
-        return $this->message['functionCall']['name'] ?? false;
-    }
-
-    public function getFunctionArgsAttribute(): array | false
-    {
-        if (!$this->function_name) return false;
-
-        // $trailingCommaHack = preg_replace('/,\s*([\]}])/m', '$1', $this->content);
-        return json_decode($this->message['functionCall']['args']);
     }
 
     public function getMessagesAttribute(): Collection
@@ -196,50 +176,8 @@ class PromptResponse extends Model
         return $cents === 0 ? '>0.1c' : $cents . "c";
     }
 
-    /*------------------------------------*\
-                         HELPERS
-     \*------------------------------------*/
-    public function requiresBackendFunctionExecution(ChatPrompt $component): bool
+    public function getCallsFunctionAttribute(): bool
     {
-        // GPT didn't ask us to call any exposed functions.
-        if (!$this->function_name) return false;
-
-        $requestedCall = $component->findFunction($this->function_name);
-
-        // GPT asked us to call a function we didn't expose (unlikely but possible hallucination)
-        if (!$requestedCall) return false;
-
-        // The function GPT wants called must execute on frontend
-        if (!$requestedCall->runOnBackend) return false;
-
-        return true;
-    }
-
-    public function runFunctionAndUpdateChat(
-        ChatPrompt $component
-    ): ChatPrompt {
-        $requestedCall = $component->findFunction($this->function_name);
-
-        $runner = new $requestedCall(...$this->function_args);
-
-        // GPT said "please call this function"
-        $component->addMessage($this->message);
-
-        // We did, here are the results
-        $component->addFunctionMessage(
-            $requestedCall->name,
-            $runner->execute()
-        );
-
-        // We've updated the chat with GPT asking and us complying.
-        return $component;
-    }
-
-    public function requiresBackendReprompt(ChatPrompt $component): bool
-    {
-        $requestedCall = $component->findFunction($this->function_name);
-
-        // return $requestedCall::$runOnBackend && $requestedCall::$reprompt;
-        return false;
+        return isset($this->message['functionCall']);
     }
 }

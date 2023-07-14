@@ -17,9 +17,9 @@ class Exchange extends Model
     /*------------------------------------*\
                      RELATIONSHIPS
      \*------------------------------------*/
-    public function user(): BelongsTo
+    public function conversation(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Conversation::class, 'conversation_id');
     }
 
     public function userTranscripts(): MorphMany
@@ -27,9 +27,14 @@ class Exchange extends Model
         return $this->morphMany(UserTranscript::class, 'transcriptable');
     }
 
-    public function promptResponses(): HasManyThrough
+    public function promptResponses(): HasMany
     {
-        return $this->hasManyThrough(PromptResponse::class, ExchangePromptResponse::class, 'exchange_id', 'id', 'id', 'prompt_response_id');
+        return $this->hasMany(PromptResponse::class, 'exchange_id');
+    }
+
+    public function functionRequests(): HasMany
+    {
+        return $this->hasMany(FunctionRequest::class, 'exchange_id');
     }
 
     /*------------------------------------*\

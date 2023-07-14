@@ -2,10 +2,9 @@
 
 namespace Larry\Larry\Prompts;
 
-use Larry\Larry\Components\ChatPrompt;
 use Illuminate\Foundation\Http\FormRequest;
 
-class AutoformPrompt extends ChatPrompt
+class AutoformPrompt extends BaseChatPrompt
 {
     public FormRequest $formRequest;
 

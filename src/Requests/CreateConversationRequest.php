@@ -3,8 +3,9 @@
 namespace Larry\Larry\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Larry\Larry\Rules\PromptExists;
 
-class UserTranscriptsRequest extends FormRequest
+class CreateConversationRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,10 +22,9 @@ class UserTranscriptsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'transcripts' => 'array',
-            'transcripts.*.said' => 'string',
-            'transcripts.*.confidence' => 'numeric',
-        ];
+        return array_merge(
+            ['prompt' => ['sometimes', new PromptExists]],
+            (new CreateConversationExchangeRequest())->rules()
+        );
     }
 }

@@ -3,40 +3,70 @@
 namespace Larry\Larry\Controllers;
 
 use App\Http\Controllers\Controller;
+use Larry\Larry\Models\Conversation;
 use Larry\Larry\Models\Exchange;
+use Larry\Larry\Requests\CreateConversationExchangeRequest;
+use Larry\Larry\Services\ConversationService;
 
 class ExchangeController extends Controller
 {
-    final public function show($id)
+    final public function create(int $conversation_id, CreateConversationExchangeRequest $request, ConversationService $conversationService)
     {
-        $this->middleware('auth');
+        $conversation = Conversation::findOrFail($conversation_id);
+        // TODO:
+        // $this->middleware('auth');
+        // $userId = auth()->user()->id ?? null;
+        $data = $request->validated();
 
-        $exchange = Exchange::findOrFail($id);
+        $exchange = $conversationService->initiateUserExchange(null, $conversation, $data['transcripts']);
+
+        return response()->json([
+            'status' => 'gpt-processing',
+            'url' => route('api.larry.exchange.show', [
+                'conversation_id' => $conversation->id,
+                'exchange_id' => $exchange->id,
+            ]),
+        ]);
+    }
+
+    final public function show(int $conversation_id, int $exchange_id)
+    {
+        $conversation = Conversation::findOrFail($conversation_id);
+        $exchange = Exchange::findOrFail($exchange_id);
+
+        // TODO:
+        // $this->middleware('auth');
+        // $userId = auth()->user()->id ?? null;
 
         if (!$exchange->finished) {
             return response()->json([
-                'type' => 'processing',
+                'status' => 'gpt-processing',
+                'url' => route('api.larry.exchange.show', [
+                    'conversation_id' => $conversation->id,
+                    'exchange_id' => $exchange->id,
+                ]),
             ]);
         }
+
+        // TODO: If promptResponse is function call, and that function result should be spoken directly to the user, we should 'speak' => that
 
         $promptResponse = $exchange->promptResponses()->latest()->first();
-
-        if ($promptResponse->function_name === false) {
+        if (!$conversation->finished) {
             return response()->json([
-                'type' => 'actionable',
-                'speak' => $promptResponse->content
+                'status' => 'gpt-finished',
+                'speak' => $promptResponse->content,
+                'url' => route('api.larry.exchange.create', [
+                    'conversation_id' => $conversation->id,
+                ]),
             ]);
         }
 
-        // TODO: If front end navigation???
-
-        // If front end function
         return response()->json([
-            'type' => 'actionable',
-            'execute' => $promptResponse->function_name,
-            'with' => $promptResponse->function_arguments,
-            // TODO:
-            'reprompt' => false,
+            'status' => 'gpt-finished',
+            'speak' => $promptResponse->content,
+            'url' => route('api.larry.conversation.create', [
+                'prompt' => $conversation->prompt,
+            ]),
         ]);
     }
 }
